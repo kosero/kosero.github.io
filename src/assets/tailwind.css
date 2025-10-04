@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
+@import "tailwindcss";
+
+body {
+    @apply bg-black text-white;
+    font-family: 'JetBrains Mono', monospace;
+    background-color: #0b0b0b;
+}
+
+.bubble {
+    font-family: 'Gloria Hallelujah', cursive;
+}
