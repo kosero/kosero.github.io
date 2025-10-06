@@ -3,7 +3,7 @@
 @import "tailwindcss";
 
 body {
-    @apply bg-black text-white;
+    @apply bg-black text-white overflow-hidden;
     font-family: 'JetBrains Mono', monospace;
     background-color: #0b0b0b;
 }
