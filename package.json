@@ -7,13 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "GENERATE_SOURCEMAP=false vite build",
-    "postbuild": "react-snap",
     "lint": "eslint .",
     "preview": "vite preview"
-  },
-  "reactSnap": {
-    "source": "dist",
-    "include": ["/", "/home", "/aboutme", "/projects", "/blog"]
   },
   "dependencies": {
     "lucide-react": "^0.544.0",
