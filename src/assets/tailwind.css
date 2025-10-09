@@ -5,7 +5,10 @@
 body {
     @apply bg-black text-white overflow-hidden text-xs sm:text-sm;
     font-family: 'JetBrains Mono', monospace;
-    background-color: #0b0b0b;
+}
+
+h1 {
+    @apply text-lg
 }
 
 .bubble {
@@ -14,8 +17,4 @@ body {
 
 .aboutmeBox {
     @apply p-1 sm:p-2 text-center
-}
-
-h1 {
-    @apply text-lg
 }

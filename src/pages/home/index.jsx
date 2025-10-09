@@ -9,7 +9,7 @@ export default function Home() {
         />
         <div className="absolute top-0 right-0 bg-white -rotate-10 text-black font-extrabold px-3 py-3 rounded-full shadow-lg border-4 border-black bubble pointer-events-none">
           SKILL<br />ISSUE
-          <div className="absolute bottom-0 left-0 w-4.5 h-4.5 bg-white border-black border-b-5 border-l-5 rounded-all"></div>
+          <div className="absolute bottom-0 left-0 w-3.5 h-3.5 bg-white border-black border-b-5 border-l-5 rounded-all"></div>
         </div>
       </div>
 
