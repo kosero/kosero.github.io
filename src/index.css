@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --bg-color: #dcd8c0;
+  --text-main: #4b483f;
+  --text-dim: #7d7a72;
+  --accent-color: #b5b19e;
+  --highlight: #dad4bb;
+  --dark-accent: #2b2b2b;
+
+  --grid-color: rgba(75, 72, 63, 0.1);
+  --scanline-color: rgba(0, 0, 0, 0.05);
+
+  --font-main: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+
+  --transition-speed: 0.3s;
+}
+
+[data-theme="dark"] {
+  --bg-color: #2b2b2b;
+  --text-main: #dcd8c0;
+  --text-dim: #9a988c;
+  --accent-color: #3e3e3e;
+  --highlight: #454545;
+  --dark-accent: #dcd8c0;
+
+  --grid-color: rgba(220, 216, 192, 0.05);
+  --scanline-color: rgba(255, 255, 255, 0.03);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  cursor: none;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+::selection {
+  background: var(--text-main);
+  color: var(--bg-color);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-main);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: repeating-linear-gradient(to bottom,
+      transparent,
+      transparent 2px,
+      var(--scanline-color) 3px,
+      var(--scanline-color) 3px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  background: none;
+  border: 1px solid var(--text-main);
+  color: var(--text-main);
+  padding: 0.5rem 1.5rem;
+  font-family: var(--font-main);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.2s ease;
+  cursor: none;
+}
+
+button:hover {
+  background: var(--text-main);
+  color: var(--bg-color);
+}
