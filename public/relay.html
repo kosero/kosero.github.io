@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kosero relay</title>
+</head>
+<body>
+<script>
+(function () {
+  var api = new URLSearchParams(location.search).get('api');
+  var targets = {
+    lastfm: 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=koserocuk&api_key=478937d7556a00158476ae097438e45d&format=json&limit=1'
+  };
+  var url = targets[api];
+  if (!url) return;
+  fetch(url)
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      parent.postMessage({ relay: api, ok: true, data: data }, '*');
+    })
+    .catch(function (err) {
+      parent.postMessage({ relay: api, ok: false, error: String(err) }, '*');
+    });
+})();
+</script>
+</body>
+</html>

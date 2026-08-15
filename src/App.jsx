@@ -1,196 +1,305 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import Header from './components/Header';
-import Cursor from './components/Cursor';
-import Home from './pages/Home';
-import PodDialogue from './components/PodDialogue';
-import MusicPlayer from './components/MusicPlayer';
-import TerminalOverlay from './components/TerminalOverlay';
-import SelfDestructOverlay from './components/SelfDestructOverlay';
-import CombatOverlay from './components/CombatOverlay';
+import React, { useEffect, useState } from 'react';
+import './index.css';
+
+const ANIMES = [
+  { id: 1210, name: 'NHK ni Youkoso!', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1210-2XotjcgqdcaX.jpg' },
+  { id: 457, name: 'Mushishi', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx457-l6cTtNgI9Bi6.png' },
+  { id: 205, name: 'Samurai Champloo', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205-7tHVFu6dPBm9.png' },
+  { id: 13125, name: 'Shinsekai yori', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx13125-2EDZb8ahshQc.png' },
+  { id: 9253, name: 'Steins;Gate', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx9253-tIUXF2gfU8Sg.jpg' },
+  { id: 7724, name: 'Shiki', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx7724-NwNnRsI34eDa.jpg' },
+  { id: 4081, name: 'Natsume Yuujinchou', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx4081-xi08naD69tjr.jpg' },
+  { id: 30, name: 'Shin Seiki Evangelion', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx30-AI1zr74Dh4ye.jpg' },
+  { id: 1535, name: 'DEATH NOTE', cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1535-kUgkcrfOrkUM.jpg' },
+];
+
+const GAMES = [
+  { id: 1113560, name: 'NieR Replicant' },
+  { id: 2124490, name: 'Silent Hill 2' },
+  { id: 223710, name: 'Cry of Fear' },
+  { id: 541570, name: 'Sally Face' },
+  { id: 362680, name: 'Fran Bow' },
+  { id: 412830, name: 'Steins;Gate' },
+  { id: 524220, name: 'NieR Automata' },
+  { id: 1002300, name: 'Fear & Hunger' },
+  { id: 2475490, name: 'Mouthwashing' },
+];
 
 function App() {
-  const [theme, setTheme] = useState(
-    localStorage.getItem('theme') || 'light'
-  );
-
-  const [isCrashed, setIsCrashed] = useState(false);
-  const [showPodDialogue, setShowPodDialogue] = useState(false);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [isSelfDestructing, setIsSelfDestructing] = useState(false);
-  const [isCombatOpen, setIsCombatOpen] = useState(false);
-  const [keySequence, setKeySequence] = useState('');
+  const [lastfm, setLastfm] = useState(null);
 
   useEffect(() => {
-    const handleKeyPress = (e) => {
-      const char = e.key.toUpperCase();
-      if (/^[A-Z]$/.test(char)) {
-        setKeySequence(prev => {
-          const next = (prev + char).slice(-10);
+    const RELAY_ORIGIN = "https://kosero.github.io";
 
-          if (next.endsWith('GLORY')) {
-            setIsTerminalOpen(true);
-            return '';
-          }
-          if (next.endsWith('DESTROY')) {
-            setIsSelfDestructing(true);
-            return '';
-          }
-          if (next.endsWith('START')) {
-            setIsCombatOpen(true);
-            return '';
-          }
-          return next;
-        });
+    const applyLastfm = (data) => {
+      const track = data?.recenttracks?.track?.[0];
+      if (!track) {
+        setLastfm(null);
+        return;
       }
+      const cover =
+        track.image?.find((img) => img.size === "extralarge")?.["#text"] ||
+        track.image?.find((img) => img.size === "large")?.["#text"] ||
+        null;
+      setLastfm({
+        song: track.name || "",
+        artist: track.artist?.["#text"] || "",
+        album: track.album?.["#text"] || "",
+        cover: cover || null,
+        url: track.url || null,
+      });
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    const onMessage = (event) => {
+      if (event.origin !== RELAY_ORIGIN) return;
+      if (event.data?.relay !== "lastfm") return;
+      if (event.data.ok) applyLastfm(event.data.data);
+    };
+    window.addEventListener("message", onMessage);
+
+    let iframe = null;
+    const mount = () => {
+      iframe = document.createElement("iframe");
+      iframe.src = `${RELAY_ORIGIN}/relay.html?api=lastfm`;
+      iframe.style.cssText = "display:none;width:1px;height:1px;";
+      iframe.setAttribute("aria-hidden", "true");
+      document.body.appendChild(iframe);
+    };
+    mount();
+    const interval = setInterval(() => {
+      if (iframe) iframe.remove();
+      mount();
+    }, 45000);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      clearInterval(interval);
+      if (iframe) iframe.remove();
+    };
   }, []);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  const activeMusic = lastfm;
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  return (
+    <div className="layout-wrapper">
+      <div className="main-grid">
+        {/* LEFT COLUMN */}
+        <div className="col-left">
+          <div className="panel" style={{ padding: '5px', position: 'relative' }}>
+            <img src="/images/avatar.jpg" alt="kosero avatar" className="avatar" />
+          </div>
 
-  const triggerCrash = () => {
-    setIsCrashed(true);
-  };
+          <div className="panel">
+            <div className="exe-title">kosero</div>
+            <div className="greeting">hmm... how's it going?</div>
+          </div>
 
-  const handleTriggerPodDialogue = () => {
-    setShowPodDialogue(true);
-  };
+          <div className="panel system-log">
+            <div className="panel-title" style={{ color: '#fff' }}>system.log</div>
+            <div className="log-row"><div className="log-key">os:</div><div className="log-value">fedora</div></div>
+            <div className="log-row"><div className="log-key">wm:</div><div className="log-value">bspwm</div></div>
+            <div className="log-row"><div className="log-key">shell:</div><div className="log-value">fish</div></div>
+            <div className="log-row"><div className="log-key">editor:</div><div className="log-value">nvim</div></div>
+            <div className="log-row"><div className="log-key">goal:</div><div className="log-value">build a soul<br />worthy engine.</div></div>
+          </div>
 
-  if (isCrashed) {
-    return (
-      <div className="fixed inset-0 z-[9999] bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-        <motion.div
-          initial={{ scaleY: 1, scaleX: 1, opacity: 1 }}
-          animate={{
-            scaleY: [1, 0.005, 0.005, 0],
-            scaleX: [1, 1, 0.005, 0],
-            opacity: [1, 1, 1, 0]
-          }}
-          transition={{
-            duration: 0.4,
-            times: [0, 0.4, 0.8, 1],
-            ease: "easeInOut"
-          }}
-          className="fixed inset-0 bg-[#dcd8c0] z-[10000] pointer-events-none"
-        />
+          <div className="quote-box">
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="w-full h-full p-12 flex flex-col justify-between text-[#dcd8c0] font-mono"
-        >
-          <div className="scanlines opacity-30 pointer-events-none" />
+          <div style={{ position: 'relative' }}>
+            <img src="/images/bottom-left.jpg" alt="" style={{ width: '100%', height: 'auto', border: '1px solid var(--border-color)', objectFit: 'cover', display: 'block' }} />
+            <div className="vertical-text" style={{ position: 'absolute', right: '10px', top: '10px' }}>
+              夢に見たあの場所へ
+            </div>
+          </div>
+        </div>
 
-          <div className="space-y-8 max-w-4xl relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="text-7xl font-bold tracking-tighter text-[#ff3333] border-b-4 border-[#ff3333] pb-4"
-            >
-              [ FATAL://SYSTEM_CRASH ]
-            </motion.div>
+        {/* MIDDLE COLUMN */}
+        <div className="col-middle">
+          <div className="welcome-hero">
+            <h1>ようこそ</h1>
+            <p>welcome to <span className="highlight">my little home</span> on the web.</p>
+            <p>i make games, break systems, and do whatever I feel like.</p>
+            <p>this is my digital scrapbook, a place for the things that shape me.</p>
+            <p>El Psy Congroo... █</p>
+          </div>
 
-            <div className="space-y-6 text-xl opacity-90">
-              <p className="font-bold text-[#ff3333] animate-pulse">ERROR_CODE: BLACK_BOX_SIGNAL_LOST</p>
-              <div className="space-y-2 opacity-70 text-sm border-l-2 border-[#dcd8c0]/20 pl-6">
-                <p>&gt; RECOVERY_PHASE_01: MEMORY_DUMP... [FAILED]</p>
-                <p>&gt; RECOVERY_PHASE_02: YO RHA_COMMAND_UPLINK... [STALL]</p>
-                <p>&gt; RECOVERY_PHASE_03: LOG_CORE_REINIT... [CRITICAL_FAILURE]</p>
-                <p>&gt; VIRUS_THRESHOLD: 98% [CAUTION]</p>
-                <p>&gt; TERMINATING_ALL_NON_ESSENTIAL_TASKS...</p>
+          <div className="panel">
+            <div className="panel-title">languages & tools</div>
+            <div className="lang-tools-grid">
+              {[
+                { name: 'C', icon: 'https://cdn.simpleicons.org/c/993333' },
+                { name: 'Rust', icon: 'https://cdn.simpleicons.org/rust/993333' },
+                { name: 'Go', icon: 'https://cdn.simpleicons.org/go/993333' },
+                { name: 'Python', icon: 'https://cdn.simpleicons.org/python/993333' },
+                { name: 'TypeScript', icon: 'https://cdn.simpleicons.org/typescript/993333' },
+                { name: 'C#', icon: 'https://cdn.simpleicons.org/dotnet/993333' },
+                { name: 'Lua', icon: 'https://cdn.simpleicons.org/lua/993333' },
+                { name: 'raylib', icon: 'https://cdn.simpleicons.org/raylib/993333' },
+                { name: 'SDL', icon: '/icons/sdl.svg' },
+                { name: 'Linux', icon: 'https://cdn.simpleicons.org/linux/993333' },
+                { name: 'Git', icon: 'https://cdn.simpleicons.org/git/993333' },
+                { name: 'Godot', icon: 'https://cdn.simpleicons.org/godotengine/993333' },
+                { name: 'Unity', icon: 'https://cdn.simpleicons.org/unity/993333' },
+              ].map(tool => (
+                <div className="tool" key={tool.name}>
+                  <img src={tool.icon} alt={tool.name} className="icon" />
+                  <div style={{ fontSize: '11px' }}>{tool.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="two-col-grid">
+            <div className="panel">
+              <div className="panel-title-icon star">anime</div>
+              <div className="grid-9">
+              {ANIMES.map((anime) => (
+                <a
+                  key={anime.id}
+                  className="grid-item"
+                  href={`https://anilist.co/anime/${anime.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={anime.name}
+                >
+                  <img
+                    src={anime.cover}
+                    alt={anime.name}
+                    className="grid-image"
+                    loading="lazy"
+                  />
+                </a>
+              ))}
               </div>
             </div>
 
-            <div className="bg-[#dcd8c0] text-[#0a0a0a] p-10 mt-12 border-l-[12px] border-[#ff3333]">
-              <h2 className="text-3xl font-bold mb-4 uppercase">System Malfunction</h2>
-              <p className="text-lg opacity-90 leading-relaxed">
-                A serious error has occurred in the tactical interface.
-                Operation cannot continue in the current state.
-                The unit and its data records are at risk of corruption.
-              </p>
-              <p className="mt-8 font-bold border-t border-[#0a0a0a]/20 pt-4 cursor-pointer hover:underline" onClick={() => window.location.reload()}>
-                &gt;&gt; INITIATE_MANUAL_REBOOT (F5)
-              </p>
+            <div className="panel">
+              <div className="panel-title-icon links">games</div>
+              <div className="grid-9">
+                {GAMES.map((game) => (
+                  <a
+                    key={game.id}
+                    className="grid-item"
+                    href={`https://store.steampowered.com/app/${game.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={game.name}
+                  >
+                    <img
+                      src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${game.id}/header.jpg`}
+                      alt={game.name}
+                      className="grid-image"
+                      loading="lazy"
+                    />
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-between items-end border-t border-[#dcd8c0]/10 pt-8 mt-auto relative z-10">
-            <div className="text-sm opacity-30">
-              UNRECOVERABLE_FAILURE_ID: 04-2B-9S-A2
+          <div className="banner-quote">
+            <img src="https://i.pinimg.com/736x/70/76/a5/7076a53f4a2dd4c9e513044505be0a1c.jpg" alt="" className="img" />
+            <div className="banner-quote-text">
+              <div className="quote-name">sunako kirishiki</div>
+              <div className="quote">
+                <div className="quote-line l1">but if i have a life,</div>
+                <div className="quote-line l2">shouldn't i treasure it?</div>
+                <div className="quote-line l3">is that a sin?</div>
+              </div>
             </div>
-            <motion.div
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="text-2xl font-bold tracking-[0.8em] opacity-60"
-            >
-              GLORY TO MANKIND.
-            </motion.div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="col-right">
+          <div className="panel music-shrine-large">
+            <div className="panel-title-icon">last listened_</div>
+            {activeMusic ? (
+              <>
+                {activeMusic.cover ? (
+                  <img
+                    src={activeMusic.cover}
+                    alt={activeMusic.album || activeMusic.song}
+                    className="cover"
+                    style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', marginBottom: '10px', border: '1px solid var(--border-color)', display: 'block' }}
+                  />
+                ) : (
+                  <div className="img-placeholder cover" style={{ width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                    🎵
+                  </div>
+                )}
+                <div style={{ fontSize: '15px', color: '#fff', fontWeight: 'bold' }}>
+                  {activeMusic.url ? (
+                    <a href={activeMusic.url} target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'none' }}>
+                      {activeMusic.song}
+                    </a>
+                  ) : (
+                    activeMusic.song
+                  )}
+                </div>
+                {activeMusic.artist && <div style={{ fontSize: '13px', color: 'var(--text-color)', marginTop: '2px' }}>{activeMusic.artist}</div>}
+                {activeMusic.album && <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>{activeMusic.album}</div>}
+              </>
+            ) : (
+              <>
+                <div className="img-placeholder cover" style={{ width: '100%', aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#555', fontSize: '12px' }}>
+                  <span>[ No Track Playing ]</span>
+                  <span style={{ fontSize: '10px', marginTop: '4px', color: '#444' }}>last.fm is silent</span>
+                </div>
+                <div style={{ fontSize: '14px', color: '#888', marginTop: '8px' }}>Not listening right now</div>
+              </>
+            )}
           </div>
 
-          <motion.div
-            animate={{
-              backgroundColor: ["rgba(255,0,0,0)", "rgba(255,0,0,0.1)", "rgba(0,0,255,0.05)", "rgba(255,0,0,0)"],
-              opacity: [0, 0.2, 0.1, 0]
-            }}
-            transition={{ repeat: Infinity, duration: 0.15, repeatDelay: 3 }}
-            className="fixed inset-0 pointer-events-none z-20"
-          />
-        </motion.div>
+          <div className="panel">
+            <div className="panel-title" style={{ color: '#fff' }}>favorite artists</div>
+            <ul className="artist-list">
+              <li>Plastic Tree</li>
+              <li>BUCK-TICK</li>
+              <li>deadman</li>
+              <li>Malice Mizer</li>
+              <li>my dead girlfriend</li>
+              <li>exist trace</li>
+              <li>MUCC</li>
+              <li>glamsucre</li>
+              <li>gulu gulu</li>
+              <li>Aimer</li>
+              <li>Akira Yamaoka</li>
+              <li>Nujabes</li>
+              <li>Massive Attack</li>
+              <li>and more...</li>
+            </ul>
+          </div>
+
+          <div className="panel">
+            <div className="panel-title">inspiration</div>
+            <div style={{ fontStyle: 'italic' }}>
+              Rick Sanchez<br />
+              Sal Fisher <br />
+              Okabe Rintarou <br />
+              Natsume Takashi
+            </div>
+          </div>
+
+          <div style={{ width: '100%', marginBottom: '10px', border: '1px solid var(--border-color)' }}>
+            <img src="/images/liminal.jpg" alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          </div>
+
+          <div style={{ position: 'absolute', right: '10px', top: '70%', transform: 'translateY(-50%)' }}>
+            <div className="vertical-text">どうしてここにいるの？</div>
+          </div>
+        </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen w-full max-w-7xl mx-auto flex flex-col relative overflow-hidden text-[var(--text-main)]">
-      <div className="scanlines" />
-
-      <Header theme={theme} toggleTheme={toggleTheme} onTriggerEasterEgg={handleTriggerPodDialogue} />
-
-      <main className="flex-grow flex items-center justify-center py-12 px-16 w-full">
-        <Home triggerCrash={triggerCrash} />
-      </main>
-
-      <div className="fixed right-8 bottom-12 z-40 hidden xl:block w-72">
-        <MusicPlayer />
+      <div className="footer-nav">
+        <div className="left">
+          © 2026 kosero
+        </div>
+        <div className="right">
+          all memories are digital.
+        </div>
       </div>
-
-      <PodDialogue
-        isOpen={showPodDialogue}
-        onClose={() => setShowPodDialogue(false)}
-        message="Proposal: External entity is currently analyzing data records. Tactical advice: Continue observation. Glory to Mankind."
-      />
-
-      <TerminalOverlay
-        isOpen={isTerminalOpen}
-        onClose={() => setIsTerminalOpen(false)}
-      />
-
-      <SelfDestructOverlay
-        isOpen={isSelfDestructing}
-      />
-
-      <CombatOverlay
-        isOpen={isCombatOpen}
-        onClose={() => setIsCombatOpen(false)}
-      />
-
-      <div className="absolute top-4 left-4 w-4 h-4 border-l-2 border-t-2 border-[var(--text-dim)] pointer-events-none" />
-      <div className="absolute top-4 right-4 w-4 h-4 border-r-2 border-t-2 border-[var(--text-dim)] pointer-events-none" />
-      <div className="absolute bottom-4 left-4 w-4 h-4 border-l-2 border-b-2 border-[var(--text-dim)] pointer-events-none" />
-      <div className="absolute bottom-4 right-4 w-4 h-4 border-r-2 border-b-2 border-[var(--text-dim)] pointer-events-none" />
-      <Cursor />
     </div>
   );
 }
